@@ -73,6 +73,21 @@ public class ChargeCommandTest {
     }
 
     @Test
+    public void move_completedChargedLesson_refusedForItsStatusNotItsCharge() throws Exception {
+        lesson(LocalDate.now(), LessonStatus.SCHEDULED);
+        run("lesson done 1");
+        String move = "lesson move 1 d/" + LocalDate.now().plusDays(1);
+
+        CommandException refusal = assertThrows(CommandException.class, () -> run(move));
+
+        assertEquals(LessonMoveCommand.MESSAGE_COMPLETED_LESSON, refusal.getMessage());
+        // reversing the charge changes nothing, so the first reply must not have suggested it
+        run("charge reverse l/1");
+        refusal = assertThrows(CommandException.class, () -> run(move));
+        assertEquals(LessonMoveCommand.MESSAGE_COMPLETED_LESSON, refusal.getMessage());
+    }
+
+    @Test
     public void charge_missedLesson_explicitBillingAndCompletionDoesNotDoubleCharge() throws Exception {
         lesson(LocalDate.now(), LessonStatus.SCHEDULED);
         run("lesson missed 1");

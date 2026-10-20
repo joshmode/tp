@@ -75,8 +75,10 @@ public class LessonMoveCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
-        FinanceCommandSupport.requireUncharged(model, target);
+        // The status comes first: a completed lesson stays refused after its charge is reversed, so the advice to
+        // reverse the charge must not be given for it
         requireMovable(target);
+        FinanceCommandSupport.requireUncharged(model, target);
         Lesson moved = createMovedLesson(target);
 
         if (!moved.isSameLesson(target) && model.hasLesson(moved)) {
