@@ -560,7 +560,8 @@ charge using the student's current rate multiplied by the lesson's duration divi
 rounded once to cents using HALF_UP. For example, $70.01/hour for 90 minutes is $105.02.
 The original rate, duration, amount, and subject description are retained. Editing the student
 rate or correcting completion notes never changes or adds another charge. A charge that has
-been reversed is never automatically restored by `lesson done`.
+been reversed is never automatically restored by `lesson done`. The result says `No automatic charge`
+and why, and `charge l/LESSON_INDEX` raises a new charge if you still want one.
 
 If a rate is zero, or the computed amount rounds to zero, completion still records the outcome
 and explains why no automatic charge was raised. Use an explicit positive override if agreed.

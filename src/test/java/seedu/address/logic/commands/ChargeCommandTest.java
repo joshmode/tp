@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -85,6 +86,21 @@ public class ChargeCommandTest {
         run("charge reverse l/1");
         refusal = assertThrows(CommandException.class, () -> run(move));
         assertEquals(LessonMoveCommand.MESSAGE_COMPLETED_LESSON, refusal.getMessage());
+    }
+
+    @Test
+    public void done_chargeWasReversed_saysNoChargeExistsAndNeverBillsAgain() throws Exception {
+        lesson(LocalDate.now(), LessonStatus.SCHEDULED);
+        run("lesson done 1");
+        run("charge reverse l/1");
+
+        String reply = run("lesson done 1 n/Corrected notes").getFeedbackToUser();
+
+        assertTrue(reply.endsWith(LessonDoneCommand.MESSAGE_CHARGE_REVERSED), reply);
+        assertEquals(2, model.getAddressBook().getLedgerEntries().size());
+        run("charge l/1");
+        assertEquals(3, model.getAddressBook().getLedgerEntries().size());
+        assertFalse(run("lesson done 1 n/Again").getFeedbackToUser().contains("No automatic charge"));
     }
 
     @Test

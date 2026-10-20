@@ -14,6 +14,7 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.LessonCommandParser;
 import seedu.address.model.Model;
+import seedu.address.model.finance.Ledger;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.finance.Money;
 import seedu.address.model.lesson.Lesson;
@@ -36,6 +37,8 @@ public class LessonDoneCommand extends Command {
     public static final String MESSAGE_CANCELLED_LESSON = "Cannot complete a cancelled lesson.";
     public static final String MESSAGE_FUTURE_LESSON =
             "That lesson is scheduled for %1$s. Mark it complete on or after that date.";
+    public static final String MESSAGE_CHARGE_REVERSED = "\nNo automatic charge: the earlier charge for this "
+            + "lesson was reversed. Use charge l/INDEX to raise it again.";
 
     private static final Logger logger = LogsCenter.getLogger(LessonDoneCommand.class);
 
@@ -75,7 +78,11 @@ public class LessonDoneCommand extends Command {
         LedgerEntry charge = null;
         boolean hasChargeHistory = model.getAddressBook().getLedgerEntries().stream()
                 .anyMatch(entry -> target.getId().equals(entry.lessonId()));
-        if (target.getStatus() != LessonStatus.COMPLETED && !hasChargeHistory) {
+        boolean hasActiveCharge = Ledger.activeCharge(model.getAddressBook(), target.getId()).isPresent();
+        if (hasChargeHistory && !hasActiveCharge) {
+            // A reversal is a deliberate correction, so completing the lesson never bills it again
+            financeMessage = MESSAGE_CHARGE_REVERSED;
+        } else if (target.getStatus() != LessonStatus.COMPLETED && !hasChargeHistory) {
             Person student = FinanceCommandSupport.lessonStudent(model, target);
             if (Money.charge(student.getRate().value, target.getDuration().value).signum() == 0) {
                 financeMessage = "\nNo automatic charge: " + (student.getRate().value.signum() == 0
