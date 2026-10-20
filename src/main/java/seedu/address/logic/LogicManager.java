@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
@@ -20,6 +21,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.UndoSnapshot;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
 
@@ -84,7 +86,7 @@ public class LogicManager implements Logic {
         String before = snapshot();
         // A destructive command needs a private copy of the data from before it runs.
         AddressBook undoCopy = command.undoLabel().isPresent() ? new AddressBook(model.getAddressBook()) : null;
-        List<String> shownBefore = lessonSelection();
+        List<UUID> shownBefore = lessonSelection();
         boolean wasDirty = dirty;
         boolean changed;
         try {
@@ -99,7 +101,7 @@ public class LogicManager implements Logic {
         }
 
         String numbering = "";
-        List<String> shownAfter = lessonSelection();
+        List<UUID> shownAfter = lessonSelection();
         boolean preservesShownRows = shownAfter.size() >= shownBefore.size()
                 && shownAfter.subList(0, shownBefore.size()).equals(shownBefore);
         if (changed && !preservesShownRows) {
@@ -139,10 +141,13 @@ public class LogicManager implements Logic {
         }
     }
 
-    /** Captures visible row identity and labels before mutation can reorder a live sorted list. */
-    private List<String> lessonSelection() {
-        return model.getFilteredLessonList().stream()
-                .map(lesson -> lesson.getId() + " " + Messages.format(lesson) + " " + lesson.getStatus()).toList();
+    /**
+     * Captures which lessons are visible, and in which order, before a mutation can reorder a live sorted list.
+     * Only identity and order decide what a lesson number refers to, so a change of status or name that leaves
+     * every row where it was does not count as a change of numbering.
+     */
+    private List<UUID> lessonSelection() {
+        return model.getFilteredLessonList().stream().map(Lesson::getId).toList();
     }
 
     /** Captures serialized state without writing, keeping persistence comparison separate from domain equality. */

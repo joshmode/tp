@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -64,6 +65,54 @@ public class LessonNumberingWorkflowTest {
         logic.execute("lesson prep 2 n/For ten oclock");
         assertEquals("10:00", model.getFilteredLessonList().get(1).getTime().toString());
         assertEquals("For ten oclock", model.getFilteredLessonList().get(1).getPreparation().orElseThrow());
+    }
+
+    @Test
+    public void done_lessonStaysInDisplayedList_doesNotAnnounceChangedNumbers() throws Exception {
+        LogicManager logic = logic();
+        LocalDate day = LocalDate.now().minusDays(1);
+        logic.execute("student add n/Alice p/91234567 l/P1 s/Math r/50");
+        logic.execute("lesson add st/1 d/" + day + " t/10:00 past/");
+        logic.execute("agenda d/" + day);
+        String result = logic.execute("lesson done 1").getFeedbackToUser();
+        assertTrue(result.startsWith("Completed:"));
+        assertFalse(result.contains("Lesson numbers have changed"));
+    }
+
+    @Test
+    public void missed_lessonStaysInDisplayedList_doesNotAnnounceChangedNumbers() throws Exception {
+        LogicManager logic = logic();
+        LocalDate day = LocalDate.now().minusDays(1);
+        logic.execute("student add n/Alice p/91234567 l/P1 s/Math r/50");
+        logic.execute("lesson add st/1 d/" + day + " t/10:00 past/");
+        logic.execute("lesson list st/1 all/");
+        String result = logic.execute("lesson missed 1").getFeedbackToUser();
+        assertTrue(result.startsWith("Marked missed:"));
+        assertFalse(result.contains("Lesson numbers have changed"));
+    }
+
+    @Test
+    public void rename_orderOfLessonsUnchanged_doesNotAnnounceChangedNumbers() throws Exception {
+        LogicManager logic = logic();
+        String date = LocalDate.now().plusDays(1).toString();
+        logic.execute("student add n/Alice p/91234567 l/P1 s/Math r/50");
+        logic.execute("lesson add st/1 d/" + date + " t/10:00");
+        logic.execute("agenda d/" + date);
+        String result = logic.execute("student edit 1 n/Zoe").getFeedbackToUser();
+        assertTrue(result.startsWith("Edited student: Zoe"));
+        assertFalse(result.contains("Lesson numbers have changed"));
+        assertEquals("Zoe", model.getFilteredLessonList().getFirst().getStudentName().fullName);
+    }
+
+    @Test
+    public void done_lessonLeavesUpcomingList_announcesChangedNumbers() throws Exception {
+        LogicManager logic = logic();
+        logic.execute("student add n/Alice p/91234567 l/P1 s/Math r/50");
+        logic.execute("lesson add st/1 d/" + LocalDate.now() + " t/00:15 dur/15");
+        logic.execute("lesson list st/1");
+        String result = logic.execute("lesson done 1").getFeedbackToUser();
+        assertTrue(result.contains("Lesson numbers have changed. Current lesson list:"));
+        assertTrue(result.contains("No lessons in the current list."));
     }
 
     @Test
