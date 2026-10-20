@@ -15,6 +15,7 @@ public class BalanceCommandParser implements Parser<BalanceCommand> {
         if (!values.getPreamble().isEmpty() || values.getValue(STUDENT).isEmpty()) {
             throw new ParseException(BalanceCommand.MESSAGE_USAGE);
         }
-        return new BalanceCommand(ParserUtil.parseIndex(values.getValue(STUDENT).orElseThrow()));
+        return new BalanceCommand(ParserUtil.parseIndex(values.getValue(STUDENT).orElseThrow(),
+                BalanceCommand.MESSAGE_USAGE));
     }
 }

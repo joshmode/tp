@@ -7,6 +7,9 @@ import seedu.address.model.person.Person;
 
 /** Changes a student's archive state without deleting any linked history or commitments. */
 public class ArchiveCommand extends Command {
+    public static final String MESSAGE_USAGE_ARCHIVE = "archive INDEX";
+    public static final String MESSAGE_USAGE_RESTORE = "restore INDEX (after 'list archived/')";
+
     private final Index index;
     private final boolean archived;
 

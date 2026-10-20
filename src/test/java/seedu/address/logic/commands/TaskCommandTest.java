@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -141,7 +142,7 @@ public class TaskCommandTest {
             {"task add st/1 desc/" + "x".repeat(201), "Task description must be 1-200 printable one-line characters."},
             {"task add st/1 desc/Bad date due/2026-02-30", "Dates must be in YYYY-MM-DD or DD/MM/YYYY format"},
             {"task list all/yes", "The 'all/' flag does not take a value."},
-            {"task done 0", "Index must be a positive integer."}};
+            {"task done 0", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, TaskDoneCommand.MESSAGE_USAGE)}};
         for (String[] testCase : cases) {
             assertTrue(rejection(testCase[0]).contains(testCase[1]), testCase[0]);
             assertEquals(before, model.getAddressBook());

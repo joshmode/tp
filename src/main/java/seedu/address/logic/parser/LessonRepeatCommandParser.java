@@ -42,7 +42,8 @@ public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
                 PREFIX_DURATION, PREFIX_VENUE, COUNT, EVERY);
         int count = parseBounded(values.getValue(COUNT).orElseThrow(), 2, 52);
         int weeks = parseBounded(values.getValue(EVERY).orElse("1"), 1, 12);
-        return new LessonRepeatCommand(ParserUtil.parseIndex(values.getValue(PREFIX_STUDENT).orElseThrow()),
+        return new LessonRepeatCommand(ParserUtil.parseIndex(values.getValue(PREFIX_STUDENT).orElseThrow(),
+                        LessonRepeatCommand.MESSAGE_USAGE),
                 ParserUtil.parseOptional(values, PREFIX_SUBJECT, ParserUtil::parseSubject),
                 DateParser.parseLessonDate(values.getValue(PREFIX_DATE).orElseThrow(), clock),
                 ParserUtil.parseTime(values.getValue(PREFIX_TIME).orElseThrow()),

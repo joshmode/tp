@@ -54,6 +54,20 @@ public class ParserUtil {
     }
 
     /**
+     * Parses {@code oneBasedIndex} as {@link #parseIndex(String)} does, but reports an invalid index as an invalid
+     * command format that shows {@code usage}, as every command that takes an index does.
+     *
+     * @throws ParseException if the specified index is invalid (not a non-zero unsigned integer).
+     */
+    public static Index parseIndex(String oneBasedIndex, String usage) throws ParseException {
+        try {
+            return parseIndex(oneBasedIndex);
+        } catch (ParseException pe) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
+        }
+    }
+
+    /**
      * Parses a {@code String name} into a {@code Name}.
      * Leading and trailing whitespaces will be trimmed.
      *

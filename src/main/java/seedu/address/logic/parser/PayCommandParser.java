@@ -33,11 +33,12 @@ public class PayCommandParser implements Parser<Command> {
         String[] parts = args.strip().split("\\s+", 2);
         String remaining = parts.length == 2 ? parts[1] : "";
         if (parts[0].equals("reverse")) {
-            return new PayReverseCommand(ParserUtil.parseIndex(remaining), clock);
+            return new PayReverseCommand(ParserUtil.parseIndex(remaining, PayReverseCommand.MESSAGE_USAGE), clock);
         }
         if (parts[0].equals("list")) {
             ArgumentMultimap values = arguments(remaining, STUDENT);
-            return new PayListCommand(ParserUtil.parseOptional(values, STUDENT, ParserUtil::parseIndex));
+            return new PayListCommand(ParserUtil.parseOptional(values, STUDENT,
+                    value -> ParserUtil.parseIndex(value, PayListCommand.MESSAGE_USAGE)));
         }
         ArgumentMultimap values = arguments(args, STUDENT, AMOUNT, DATE, NOTES);
         if (values.getValue(STUDENT).isEmpty() || values.getValue(AMOUNT).isEmpty()) {
@@ -49,7 +50,8 @@ public class PayCommandParser implements Parser<Command> {
         }
         LocalDate date = values.getValue(DATE).isEmpty() ? LocalDate.now(clock)
                 : DateParser.parse(values.getValue(DATE).orElseThrow(), clock);
-        return new PayCommand(ParserUtil.parseIndex(values.getValue(STUDENT).orElseThrow()),
+        return new PayCommand(
+                ParserUtil.parseIndex(values.getValue(STUDENT).orElseThrow(), PayCommand.MESSAGE_USAGE),
                 FinanceParserUtil.parseAmount(values.getValue(AMOUNT).orElseThrow()), date, notes, clock);
     }
 

@@ -43,7 +43,7 @@ public class TaskCommandParser implements Parser<Command> {
             case "add" -> parseAdd(" " + arguments);
             case "list" -> parseList(" " + arguments);
             case "edit" -> parseEdit(" " + arguments);
-            case "done" -> new TaskDoneCommand(ParserUtil.parseIndex(arguments));
+            case "done" -> new TaskDoneCommand(ParserUtil.parseIndex(arguments, TaskDoneCommand.MESSAGE_USAGE));
             case "delete" -> parseDelete(arguments);
             default -> throw new ParseException(
                     "Task commands: task add, task list, task edit, task done, task delete");
@@ -66,7 +66,8 @@ public class TaskCommandParser implements Parser<Command> {
         FollowUpTask.LinkType type = link.equals(STUDENT) ? FollowUpTask.LinkType.STUDENT
                 : link.equals(LESSON) ? FollowUpTask.LinkType.LESSON
                 : link.equals(HOMEWORK) ? FollowUpTask.LinkType.HOMEWORK : FollowUpTask.LinkType.PAYMENT;
-        return new TaskAddCommand(type, ParserUtil.parseIndex(values.getValue(link).orElseThrow()),
+        return new TaskAddCommand(type,
+                ParserUtil.parseIndex(values.getValue(link).orElseThrow(), TaskAddCommand.MESSAGE_USAGE),
                 description(values.getValue(DESCRIPTION).orElseThrow()),
                 ParserUtil.parseOptional(values, DUE, text -> DateParser.parse(text, clock)));
     }
@@ -79,7 +80,8 @@ public class TaskCommandParser implements Parser<Command> {
         if (!values.getPreamble().isBlank()) {
             throw new ParseException(TaskListCommand.MESSAGE_USAGE);
         }
-        return new TaskListCommand(ParserUtil.parseOptional(values, STUDENT, ParserUtil::parseIndex),
+        return new TaskListCommand(ParserUtil.parseOptional(values, STUDENT,
+                        value -> ParserUtil.parseIndex(value, TaskListCommand.MESSAGE_USAGE)),
                 ParserUtil.parseFlag(values, ALL), LocalDate.now(clock));
     }
 
@@ -92,7 +94,7 @@ public class TaskCommandParser implements Parser<Command> {
             throw new ParseException(TaskEditCommand.MESSAGE_USAGE);
         }
         String due = values.getValue(DUE).orElse(null);
-        return new TaskEditCommand(ParserUtil.parseIndex(values.getPreamble()),
+        return new TaskEditCommand(ParserUtil.parseIndex(values.getPreamble(), TaskEditCommand.MESSAGE_USAGE),
                 description(values.getValue(DESCRIPTION).orElseThrow()),
                 due == null || due.equals("-") ? null : DateParser.parse(due, clock), due != null);
     }
@@ -103,7 +105,8 @@ public class TaskCommandParser implements Parser<Command> {
         if (words.length > 2 || words.length == 2 && !words[1].equals("confirm")) {
             throw new ParseException(TaskDeleteCommand.MESSAGE_USAGE);
         }
-        return new TaskDeleteCommand(ParserUtil.parseIndex(words[0]), words.length == 2);
+        return new TaskDeleteCommand(ParserUtil.parseIndex(words[0], TaskDeleteCommand.MESSAGE_USAGE),
+                words.length == 2);
     }
 
     /** Converts invalid task prose into a parser error. */

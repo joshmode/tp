@@ -60,7 +60,7 @@ public class HomeworkCommandParser implements Parser<Command> {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, STATUS);
         values.verifyNoDuplicatePrefixesFor(STATUS);
         values.verifyNoEmptyValuesFor(STATUS);
-        Index index = ParserUtil.parseIndex(values.getPreamble());
+        Index index = ParserUtil.parseIndex(values.getPreamble(), HomeworkStatusCommand.MESSAGE_USAGE);
         try {
             HomeworkStatus status = HomeworkStatus.valueOf(values.getValue(STATUS).orElse("")
                     .toUpperCase(Locale.ENGLISH));
@@ -78,7 +78,8 @@ public class HomeworkCommandParser implements Parser<Command> {
         if (values.getValue(FEEDBACK).isEmpty()) {
             throw new ParseException(HomeworkFeedbackCommand.MESSAGE_USAGE);
         }
-        return new HomeworkFeedbackCommand(ParserUtil.parseIndex(values.getPreamble()),
+        return new HomeworkFeedbackCommand(
+                ParserUtil.parseIndex(values.getPreamble(), HomeworkFeedbackCommand.MESSAGE_USAGE),
                 ParserUtil.parseNotes(values.getValue(FEEDBACK).orElseThrow()));
     }
 
@@ -88,7 +89,8 @@ public class HomeworkCommandParser implements Parser<Command> {
         if (words.length > 2 || words.length == 2 && !words[1].equals("confirm")) {
             throw new ParseException(HomeworkDeleteCommand.MESSAGE_USAGE);
         }
-        return new HomeworkDeleteCommand(ParserUtil.parseIndex(words[0]), words.length == 2);
+        return new HomeworkDeleteCommand(ParserUtil.parseIndex(words[0], HomeworkDeleteCommand.MESSAGE_USAGE),
+                words.length == 2);
     }
 
     /** Parses required assignment fields without treating prose as unrelated command prefixes. */
@@ -97,7 +99,8 @@ public class HomeworkCommandParser implements Parser<Command> {
         values.verifyNoDuplicatePrefixesFor(STUDENT, DESCRIPTION, DUE);
         values.verifyNoEmptyValuesFor(STUDENT, DESCRIPTION, DUE);
         ParserUtil.requirePrefixesPresent(values, HomeworkAddCommand.MESSAGE_USAGE, STUDENT, DESCRIPTION, DUE);
-        return new HomeworkAddCommand(ParserUtil.parseIndex(values.getValue(STUDENT).orElseThrow()),
+        return new HomeworkAddCommand(
+                ParserUtil.parseIndex(values.getValue(STUDENT).orElseThrow(), HomeworkAddCommand.MESSAGE_USAGE),
                 parseDescription(values.getValue(DESCRIPTION).orElseThrow()),
                 parseDate(values.getValue(DUE).orElseThrow()), LocalDate.now(clock));
     }
@@ -110,7 +113,8 @@ public class HomeworkCommandParser implements Parser<Command> {
         if (values.getValue(DESCRIPTION).isEmpty() && values.getValue(DUE).isEmpty()) {
             throw new ParseException(HomeworkEditCommand.MESSAGE_USAGE);
         }
-        return new HomeworkEditCommand(ParserUtil.parseIndex(values.getPreamble()),
+        return new HomeworkEditCommand(
+                ParserUtil.parseIndex(values.getPreamble(), HomeworkEditCommand.MESSAGE_USAGE),
                 ParserUtil.parseOptional(values, DESCRIPTION, this::parseDescription),
                 ParserUtil.parseOptional(values, DUE, this::parseDate), LocalDate.now(clock));
     }
@@ -142,7 +146,8 @@ public class HomeworkCommandParser implements Parser<Command> {
         if (overdue && outstanding) {
             throw new ParseException("Choose overdue/ or outstanding/, not both.");
         }
-        Index student = ParserUtil.parseOptional(values, STUDENT, ParserUtil::parseIndex);
+        Index student = ParserUtil.parseOptional(values, STUDENT,
+                value -> ParserUtil.parseIndex(value, HomeworkListCommand.MESSAGE_USAGE));
         return new HomeworkListCommand(student, overdue, outstanding, LocalDate.now(clock));
     }
 }

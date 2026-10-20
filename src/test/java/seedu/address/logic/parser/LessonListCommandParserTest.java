@@ -32,7 +32,8 @@ public class LessonListCommandParserTest {
 
     @Test
     public void parse_invalidStudentIndex_failure() {
-        assertParseFailure(parser, " st/x", ParserUtil.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " st/x",
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, LessonListCommand.MESSAGE_USAGE));
     }
 
     @Test

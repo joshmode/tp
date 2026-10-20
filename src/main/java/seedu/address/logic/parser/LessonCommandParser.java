@@ -53,7 +53,8 @@ public class LessonCommandParser implements Parser<Command> {
         if (words.length != 3 || !words[0].equals("cancel") || !words[2].equals("confirm")) {
             throw new ParseException(LessonSeriesCancelCommand.MESSAGE_USAGE);
         }
-        return new LessonSeriesCancelCommand(ParserUtil.parseIndex(words[1]), Clock.systemDefaultZone());
+        return new LessonSeriesCancelCommand(
+                ParserUtil.parseIndex(words[1], LessonSeriesCancelCommand.MESSAGE_USAGE), Clock.systemDefaultZone());
     }
 
     private static String getUsage() {

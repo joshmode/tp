@@ -91,8 +91,10 @@ public class AddressBookParser {
             case "charge" -> new ChargeCommandParser().parse(arguments);
             case "hw" -> new HomeworkCommandParser().parse(arguments);
             case "student" -> new StudentCommandParser().parse(arguments);
-            case "archive" -> new ArchiveCommand(ParserUtil.parseIndex(arguments), true);
-            case "restore" -> new ArchiveCommand(ParserUtil.parseIndex(arguments), false);
+            case "archive" -> new ArchiveCommand(
+                    ParserUtil.parseIndex(arguments, ArchiveCommand.MESSAGE_USAGE_ARCHIVE), true);
+            case "restore" -> new ArchiveCommand(
+                    ParserUtil.parseIndex(arguments, ArchiveCommand.MESSAGE_USAGE_RESTORE), false);
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);

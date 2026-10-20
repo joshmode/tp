@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import java.math.BigDecimal;
 import java.time.Clock;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.ChargeCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -35,6 +36,7 @@ public class ChargeCommandParser implements Parser<ChargeCommand> {
         }
         BigDecimal amount = values.getValue(AMOUNT).isPresent()
                 ? FinanceParserUtil.parseAmount(values.getValue(AMOUNT).orElseThrow()) : null;
-        return new ChargeCommand(ParserUtil.parseIndex(values.getValue(LESSON).orElseThrow()), amount, reverse, clock);
+        Index lessonIndex = ParserUtil.parseIndex(values.getValue(LESSON).orElseThrow(), ChargeCommand.MESSAGE_USAGE);
+        return new ChargeCommand(lessonIndex, amount, reverse, clock);
     }
 }
