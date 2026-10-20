@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,91 +78,101 @@ public class DeleteCommand extends Command {
         }
 
         Person personToDelete = lastShownList.get(targetIndex.getZeroBased());
-        List<Lesson> lessonsToDelete = model.getAddressBook().getLessonList().stream()
-                .filter(lesson -> lesson.isWith(personToDelete))
-                .toList();
+        LinkedRecords records = LinkedRecords.of(model, personToDelete);
 
-        List<Homework> homeworkToDelete = model.getAddressBook().getHomeworkList().stream()
-                .filter(item -> item.getStudentId().equals(personToDelete.getId())).toList();
-        long taskCount = model.getAddressBook().getTaskList().stream()
-                .filter(task -> task.studentId().equals(personToDelete.getId())).count();
-        if (taskCount > 0) {
-            return deleteWithTasks(model, personToDelete, lessonsToDelete, homeworkToDelete, taskCount);
-        }
-        long financialEntries = model.getAddressBook().getLedgerEntries().stream()
-                .filter(entry -> entry.studentId().equals(personToDelete.getId())).count();
-        if (financialEntries > 0) {
-            return deleteWithFinance(model, personToDelete, lessonsToDelete, homeworkToDelete, financialEntries);
-        }
-        if (!homeworkToDelete.isEmpty()) {
-            return deleteWithHomework(model, personToDelete, lessonsToDelete, homeworkToDelete);
-        }
-
-        if (lessonsToDelete.isEmpty()) {
+        if (records.isEmpty()) {
             model.deletePerson(personToDelete);
             return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS, Messages.format(personToDelete)));
         }
 
         if (!isConfirmed) {
-            return new CommandResult(getConfirmationPrompt(personToDelete, lessonsToDelete));
+            return new CommandResult(getConfirmationPreview(model, personToDelete, records));
         }
 
         model.deletePerson(personToDelete);
-        return new CommandResult(String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS,
-                Messages.format(personToDelete), lessonsToDelete.size()));
+        return new CommandResult(getSuccessMessage(personToDelete, records));
     }
 
-    /** Previews all task links and parent history before the confirmed root cascade. */
-    private CommandResult deleteWithTasks(Model model, Person student, List<Lesson> lessons,
-            List<Homework> homework, long taskCount) {
-        long events = model.getAddressBook().getLedgerEntries().stream()
-                .filter(entry -> entry.studentId().equals(student.getId())).count();
-        if (!isConfirmed) {
-            long withFeedback = homework.stream().filter(item -> item.getFeedback().isPresent()).count();
-            return new CommandResult(getConfirmationPrompt(student, lessons)
-                    + "\nThis also deletes " + taskCount + " task(s), " + homework.size()
-                    + " homework item(s), " + withFeedback + " with feedback, and " + events
-                    + " financial event(s). Balance: "
-                    + FinanceQueries.balanceLabel(Ledger.balance(model.getAddressBook(), student.getId()))
-                    + ". Use 'archive INDEX' to retain obligations and history instead.");
+    /**
+     * Returns what deleting {@code student} would delete along with them, and how to confirm. A student with
+     * homework, financial events or tasks also gets their counts, their balance and the advice to archive instead.
+     */
+    private String getConfirmationPreview(Model model, Person student, LinkedRecords records) {
+        String preview = getConfirmationPrompt(student, records.lessons());
+        if (!records.hasHistoryBeyondLessons()) {
+            return preview;
         }
-        model.deletePerson(student);
-        return new CommandResult("Deleted student: " + Messages.format(student) + ", along with "
-                + lessons.size() + " lesson(s), " + homework.size() + " homework item(s), "
-                + events + " financial event(s), and " + taskCount + " task(s).");
+        return preview + "\n" + describeHistory(records) + "\nBalance: "
+                + FinanceQueries.balanceLabel(Ledger.balance(model.getAddressBook(), student.getId()))
+                + ". Use 'archive INDEX' to retain these obligations and all history instead.";
     }
 
-    /** Warns about every linked domain, including paid or reversed history, before cascading deletion. */
-    private CommandResult deleteWithFinance(Model model, Person student, List<Lesson> lessons,
-            List<Homework> homework, long financialEntries) {
-        if (!isConfirmed) {
-            long upcoming = homework.stream().filter(Homework::isOutstanding)
-                    .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
-            return new CommandResult(getConfirmationPrompt(student, lessons)
-                    + "\nThis also deletes " + homework.size() + " homework item(s), including " + upcoming
-                    + " upcoming homework item(s), and " + financialEntries + " financial event(s).\nBalance: "
-                    + FinanceQueries.balanceLabel(Ledger.balance(model.getAddressBook(), student.getId()))
-                    + ". Use 'archive INDEX' to retain these obligations and all history instead.");
-        }
-        model.deletePerson(student);
-        return new CommandResult("Deleted student: " + Messages.format(student) + ", along with "
-                + lessons.size() + " lesson(s), " + homework.size() + " homework item(s), and "
-                + financialEntries + " financial event(s).");
+    /**
+     * Returns the line that counts the homework, financial events and tasks that would be deleted. Feedback is
+     * mentioned only when there is some, because it is the part of the history that took thought to write.
+     */
+    private static String describeHistory(LinkedRecords records) {
+        long upcoming = records.homework().stream().filter(Homework::isOutstanding)
+                .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
+        String homework = records.homework().size() + " homework item(s), including " + upcoming
+                + " upcoming homework item(s)";
+        String events = records.financialEvents() + " financial event(s)";
+        String line = records.tasks() == 0
+                ? "This also deletes " + homework + ", and " + events + "."
+                : "This also deletes " + homework + ", " + events + ", and " + records.tasks() + " task(s).";
+        long withFeedback = records.homework().stream().filter(item -> item.getFeedback().isPresent()).count();
+        return withFeedback == 0
+                ? line
+                : line + " Recorded feedback on " + withFeedback + " homework item(s) will be deleted.";
     }
 
-    /** Shows all linked records and upcoming commitments before cascading a student deletion. */
-    private CommandResult deleteWithHomework(Model model, Person student, List<Lesson> lessons,
-            List<Homework> homework) {
-        if (!isConfirmed) {
-            long upcoming = homework.stream().filter(Homework::isOutstanding)
-                    .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
-            return new CommandResult(getConfirmationPrompt(student, lessons)
-                    + "\nThis also deletes " + homework.size() + " homework item(s), including " + upcoming
-                    + " upcoming homework item(s), and all recorded feedback.");
+    /** Returns what was deleted along with {@code student}, listing every kind of record that was present. */
+    private static String getSuccessMessage(Person student, LinkedRecords records) {
+        if (!records.hasHistoryBeyondLessons()) {
+            return String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS, Messages.format(student),
+                    records.lessons().size());
         }
-        model.deletePerson(student);
-        return new CommandResult("Deleted student: " + Messages.format(student) + ", along with "
-                + lessons.size() + " lesson(s) and " + homework.size() + " homework item(s).");
+        List<String> parts = new ArrayList<>();
+        parts.add(records.lessons().size() + " lesson(s)");
+        parts.add(records.homework().size() + " homework item(s)");
+        if (records.financialEvents() > 0 || records.tasks() > 0) {
+            parts.add(records.financialEvents() + " financial event(s)");
+        }
+        if (records.tasks() > 0) {
+            parts.add(records.tasks() + " task(s)");
+        }
+        return "Deleted student: " + Messages.format(student) + ", along with " + joinWithAnd(parts) + ".";
+    }
+
+    /** Joins two items with "and", and more with commas and a final "and". */
+    private static String joinWithAnd(List<String> parts) {
+        if (parts.size() == 2) {
+            return parts.get(0) + " and " + parts.get(1);
+        }
+        return String.join(", ", parts.subList(0, parts.size() - 1)) + ", and " + parts.getLast();
+    }
+
+    /** The records that are deleted together with a student. */
+    private record LinkedRecords(List<Lesson> lessons, List<Homework> homework, long financialEvents, long tasks) {
+        static LinkedRecords of(Model model, Person student) {
+            List<Lesson> lessons = model.getAddressBook().getLessonList().stream()
+                    .filter(lesson -> lesson.isWith(student)).toList();
+            List<Homework> homework = model.getAddressBook().getHomeworkList().stream()
+                    .filter(item -> item.getStudentId().equals(student.getId())).toList();
+            long financialEvents = model.getAddressBook().getLedgerEntries().stream()
+                    .filter(entry -> entry.studentId().equals(student.getId())).count();
+            long tasks = model.getAddressBook().getTaskList().stream()
+                    .filter(task -> task.studentId().equals(student.getId())).count();
+            return new LinkedRecords(lessons, homework, financialEvents, tasks);
+        }
+
+        boolean hasHistoryBeyondLessons() {
+            return !homework.isEmpty() || financialEvents > 0 || tasks > 0;
+        }
+
+        boolean isEmpty() {
+            return lessons.isEmpty() && !hasHistoryBeyondLessons();
+        }
     }
 
     /**
