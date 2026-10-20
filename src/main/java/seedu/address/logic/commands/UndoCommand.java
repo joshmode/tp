@@ -19,7 +19,8 @@ public class UndoCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Restores all data as it was before your latest "
             + "student deletion, clear, homework deletion or task deletion.\n"
             + "Only that one step is remembered, and only until you change any data again or close TutorFlow.\n"
-            + "Parameters: none";
+            + "Parameters: none\n"
+            + "Example: " + COMMAND_WORD;
 
     public static final String MESSAGE_NOTHING_TO_UNDO = "Nothing to undo. Undo restores your latest deletion "
             + "or clear, and only until you make another change.";
