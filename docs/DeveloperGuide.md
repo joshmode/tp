@@ -1016,31 +1016,45 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
+   1. In a terminal, run `java -jar tutorflow.jar` from that folder (use the actual file name).<br>
       Expected: The GUI opens empty with welcome and demo instructions. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with the same `java -jar` command.<br>
        Expected: The most recent window size and location are retained.
 
 
-### Deleting a person
+### Students
 
-1. Deleting a person while all persons are being shown
+1. Adding and finding students
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Test case: `add n/Alice Tan p/91234567 l/S3 s/Math r/50`, then `add n/Bob Lee p/98765432 l/P5 s/Math s/Science r/40`<br>
+      Expected: Both students are added and listed.
+
+   1. Test case: `add n/Alice Tan p/91234567 l/S3 s/Math r/50` again<br>
+      Expected: Rejected as a duplicate. Nothing changes.
+
+   1. Test case: `find alice`<br>
+      Expected: `1 student(s) listed!` and only Alice Tan is shown.
+
+1. Deleting a student
+
+   1. Prerequisites: List all students with `list`, with at least two students, the first having at least one lesson.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: Nothing is deleted. The preview shows the linked lessons, homework, tasks and financial events and asks for `delete 1 confirm`.
+
+   1. Test case: `delete 1 confirm`<br>
+      Expected: The student and all linked records are deleted.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No student is deleted. The error shows the usage of `delete`.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Other incorrect delete commands to try: `delete`, `delete x`, `delete 99` (larger than the list size)<br>
+      Expected: Similar to the previous case.
 
 
 ### Lessons
@@ -1127,6 +1141,37 @@ testers are expected to do more *exploratory* testing.
 
    1. Other incorrect commands to try: completion of a future or cancelled lesson, `lesson done 0`, `lesson done INDEX n/`, or `lesson done INDEX n/First n/Second`<br>
       Expected: Rejected without changing the lesson or notes.
+
+### Tasks, homework and payments
+
+1. Follow-up tasks
+
+   1. Prerequisites: At least one student in the list.
+
+   1. Test case: `task add st/1 desc/Call parent due/tmr`, then `task list`<br>
+      Expected: The task is added and shown as task 1 with its due date.
+
+   1. Test case: `task done 1`, then `task delete 1`, then `task delete 1 confirm`<br>
+      Expected: The task is marked done, the second command asks for confirmation, and the third deletes it.
+
+1. Homework
+
+   1. Test case: `hw add st/1 desc/Algebra due/tmr`, `hw list`, `hw status 1 s/submitted`, `hw feedback 1 f/Revisit sign errors`<br>
+      Expected: Each command succeeds and `hw list` shows the status and feedback.
+
+   1. Test case: `hw status 1 s/foo`<br>
+      Expected: Rejected with the list of valid statuses.
+
+1. Payments and dues
+
+   1. Prerequisites: Record a lesson that has already taken place with `lesson add st/1 d/2026-10-20 t/16:00 past/`, then `lesson done 1`.
+
+   1. Test case: `pay st/1 amt/20`, then `balance st/1` and `dues`<br>
+      Expected: The payment reduces the balance and `dues` lists the student if anything is still owed.
+
+   1. Test case: `pay st/1 amt/0`<br>
+      Expected: Rejected, because the amount must be greater than zero.
+
 
 ### Saving data
 
@@ -1247,3 +1292,19 @@ guards must wrap homework/student deletion before removing any record to avoid o
 Focused regression tests cover historical feedback, schema progression and refusal, duplicate/orphan
 rejection, due-date boundaries, lifecycle correction, guarded deletion, filtered numbering, archive,
 rename, actual JSON restart, failed saves, protected original bytes, and retry before exit.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## **Appendix: Effort**
+
+AddressBook-Level3 (AB3) manages one entity type, `Person`, with add, edit, delete, find and list. TutorFlow manages a tutor's whole working day, so it has several linked entity types: students, lessons (with series), homework, follow-up tasks and a financial ledger of charges and payments.
+
+**Difficulty.** The main difficulty is consistency across entity types. A student is referred to by permanent identifiers from lessons, homework, tasks and ledger entries, so editing, archiving or deleting a student has to keep all of them correct. Indexed commands use numbered selections that stay fixed until the next listing, which AB3 does not need.
+
+**Challenges.**
+* Scheduling: overlap and travel-buffer warnings, series of weekly lessons that are added all-or-nothing, and a clock that tests can control.
+* Money: an append-only ledger, rounding rules, and dues ordered by the oldest unpaid charge.
+* Storage: a versioned JSON format with migration from older files and recovery from a corrupt file.
+* Input rules: strict but helpful validation, with specific error messages, written to match the specification.
+
+**Effort and achievements.** Most of the work went into the Logic and Model components and their tests rather than the UI. The test suite has more than 1,300 tests. Documentation and diagrams were kept in step with the code.

@@ -17,9 +17,16 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
 1. Copy the file to the folder you want to use as the _home folder_ for TutorFlow.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tutorflow.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tutorflow.jar`. Use the exact file name of the JAR you downloaded, in double quotes if it contains special characters.<br>
    A GUI similar to the one below should appear in a few seconds. A new data set starts empty, so your own list will have no students until you add some. The screenshot below shows a list that already contains students.<br>
    ![Ui](images/Ui.png)
+
+<box type="warning" seamless>
+
+**Launching tips:**
+* Start the app with `java -jar`, as above, rather than by double-clicking the JAR file. Double-clicking can run a different Java version and may not work on some systems.
+* Put the JAR file in a folder that the app is allowed to write to. TutorFlow creates its `data` folder and `preferences.json` next to the JAR file, so it will not work properly in a write-protected folder.
+</box>
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to see the list of commands.<br>
    Some example commands you can try:
@@ -634,6 +641,7 @@ _Details coming soon ..._
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then use the `Help` menu or the keyboard shortcut `F1` again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window. The `help` command displays command information in the main window.
 3. **Chinese and other wide characters** take up more room than Latin letters. In the result box, the columns of `agenda`, `today` and `lesson list` can therefore look misaligned when a name, subject or venue contains them. The information shown is still correct.
+4. **Mac users in fullscreen mode** may see the Help Window open in another space or behave unexpectedly. Leave fullscreen mode before using the `Help` menu or `F1`. The `help` command is not affected.
 
 --------------------------------------------------------------------------------------------------------------------
 
