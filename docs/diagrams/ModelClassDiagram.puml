@@ -30,6 +30,10 @@ Class LessonTime
 Class LessonDuration
 Class LessonStatus
 
+Class Homework
+Class HomeworkStatus
+Class Task
+
 package Finance {
 Class LedgerEntry
 Class Ledger
@@ -53,6 +57,8 @@ UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" UniquePersonList
 AddressBook *--> "1" UniqueLessonList
+AddressBook *--> "0..*" Homework
+AddressBook *--> "0..*" Task
 AddressBook *--> "0..*" LedgerEntry : records
 UniquePersonList --> "~* all" Person
 Person *--> Name
@@ -70,7 +76,12 @@ Lesson *--> LessonTime
 Lesson *--> LessonDuration
 Lesson *--> LessonStatus
 Lesson *--> "0..1" Venue
-Lesson ..> Person : refers to its\nstudent by name\nand phone
+Lesson ..> Person : refers to its\nstudent by student ID
+Homework *--> HomeworkStatus
+Homework ..> Person : studentId
+Task ..> Person : studentId
+Task ..> Lesson : optional lessonId
+Task ..> Homework : optional homeworkId
 
 LedgerEntry ..> Person : studentId
 LedgerEntry ..> Lesson : optional lessonId\n(charges only)

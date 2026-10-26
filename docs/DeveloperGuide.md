@@ -897,7 +897,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 1.  Tutor requests to list students
 2.  TutorFlow shows a list of students
 3.  Tutor requests to delete a specific student in the list
-4.  TutorFlow tells the tutor which lessons, homework and payment records will be deleted along with the student, and asks for confirmation
+4.  TutorFlow tells the tutor which lessons, homework, tasks and financial records will be deleted along with the student, and asks for confirmation
 5.  Tutor confirms the deletion
 6.  TutorFlow deletes the student and all of their records, and confirms the deletion
 
@@ -915,7 +915,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-* 4a. The student has no lessons, homework or payments.
+* 4a. The student has no lessons, homework, tasks or financial records.
 
     * 4a1. TutorFlow deletes the student without asking for confirmation.
 
@@ -957,6 +957,82 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3a1. TutorFlow shows an error message.
 
       Use case resumes at step 3.
+
+**Use case: UC9 - Schedule a weekly series of lessons**
+
+**MSS**
+
+1.  Tutor requests to list students
+2.  TutorFlow shows a list of students
+3.  Tutor requests to schedule a series for a specific student, providing the first date, the time, how many lessons there are and, optionally, the subject, duration, venue and the number of weeks between lessons
+4.  TutorFlow adds every lesson of the series and shows the numbered lesson list
+
+    Use case ends.
+
+**Extensions**
+
+* 3a. The given index is invalid, or a detail is missing or invalid (for example, a count outside 2-52).
+
+    * 3a1. TutorFlow shows an error message and adds nothing.
+
+      Use case resumes at step 3.
+
+* 3b. The student takes several subjects and no subject is given.
+
+    * 3b1. TutorFlow asks the tutor to specify one and adds nothing.
+
+      Use case resumes at step 3.
+
+* 3c. One of the lessons already exists, or one falls outside the allowed date range.
+
+    * 3c1. TutorFlow rejects the whole series, so that either all of it or none of it is added.
+
+      Use case resumes at step 3.
+
+* 4a. A lesson overlaps another scheduled lesson or leaves too little travel time.
+
+    * 4a1. TutorFlow adds the series and warns the tutor about each overlap or travel gap.
+
+      Use case ends.
+
+**Use case: UC10 - Archive and restore a student**
+
+**MSS**
+
+1.  Tutor requests to list students
+2.  TutorFlow shows a list of active students
+3.  Tutor requests to archive a specific student in the list
+4.  TutorFlow archives the student, keeps their lessons, homework and financial history, and refreshes the list
+5.  Tutor requests to list archived students and to restore the student
+6.  TutorFlow restores the student and refreshes the list
+
+    Use case ends.
+
+**Extensions**
+
+* 3a. The given index is invalid, or the student is already archived.
+
+    * 3a1. TutorFlow shows an error message.
+
+      Use case resumes at step 3.
+
+* 4a. The tutor tries to schedule a lesson or assign homework for the archived student.
+
+    * 4a1. TutorFlow asks the tutor to restore the student first and adds nothing.
+
+      Use case ends.
+
+* 4b. The tutor records a payment from the archived student.
+
+    * 4b1. TutorFlow records the payment as usual.
+
+      Use case ends.
+
+* 5a. The student is already active.
+
+    * 5a1. TutorFlow tells the tutor to list the archived students before restoring.
+
+      Use case ends.
 
 ### Non-Functional Requirements
 
