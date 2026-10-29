@@ -24,12 +24,15 @@ public class VersionedAddressBook extends AddressBook {
         super(toBeCopied);
     }
 
-    private void saveState() {
-        this.lastState = new AddressBook(this);
-    }
-
-    private void saveDestructiveAction(DestructiveActionType actionType) {
-        this.lastDestructiveAction = actionType;
+    /**
+     * Runs a destructive change and publishes an undo point only after it succeeds. A rejected deletion must
+     * leave the previous undo point intact rather than replacing it with a state captured mid-operation.
+     */
+    private void performDestructiveAction(Runnable action, DestructiveActionType actionType) {
+        ReadOnlyAddressBook stateBeforeAction = new AddressBook(this);
+        action.run();
+        lastState = stateBeforeAction;
+        lastDestructiveAction = actionType;
     }
 
     private void resetDestructiveAction() {
@@ -81,9 +84,7 @@ public class VersionedAddressBook extends AddressBook {
     public void clearData() {
         // Don't clear if already empty
         if (!isEmpty()) {
-            saveState();
-            super.clearData();
-            saveDestructiveAction(DestructiveActionType.CLEAR);
+            performDestructiveAction(super::clearData, DestructiveActionType.CLEAR);
         }
     }
 
@@ -101,9 +102,7 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void removePerson(Person key) {
-        saveState();
-        super.removePerson(key);
-        saveDestructiveAction(DestructiveActionType.DELETE_STUDENT);
+        performDestructiveAction(() -> super.removePerson(key), DestructiveActionType.DELETE_STUDENT);
     }
 
     @Override
@@ -120,9 +119,7 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void removeLesson(Lesson key) {
-        saveState();
-        super.removeLesson(key);
-        saveDestructiveAction(DestructiveActionType.DELETE_LESSON);
+        performDestructiveAction(() -> super.removeLesson(key), DestructiveActionType.DELETE_LESSON);
     }
 
     @Override
@@ -139,9 +136,7 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void removeTask(Task key) {
-        saveState();
-        super.removeTask(key);
-        saveDestructiveAction(DestructiveActionType.DELETE_TASK);
+        performDestructiveAction(() -> super.removeTask(key), DestructiveActionType.DELETE_TASK);
     }
 
     @Override
@@ -176,9 +171,7 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void removeHomework(Homework target) {
-        saveState();
-        super.removeHomework(target);
-        saveDestructiveAction(DestructiveActionType.DELETE_HW);
+        performDestructiveAction(() -> super.removeHomework(target), DestructiveActionType.DELETE_HW);
     }
 
     @Override

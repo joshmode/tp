@@ -27,6 +27,7 @@ import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.StudentOrder;
 import seedu.address.model.person.UniquePersonList;
+import seedu.address.model.person.exceptions.PersonNotFoundException;
 import seedu.address.model.task.Task;
 
 /**
@@ -192,14 +193,23 @@ public class AddressBook implements ReadOnlyAddressBook {
      * {@code key} must exist in the address book.
      */
     public void removePerson(Person key) {
+        requireNonNull(key);
+        if (!persons.contains(key)) {
+            throw new PersonNotFoundException();
+        }
+        Person stored = persons.asUnmodifiableObservableList().stream()
+                .filter(person -> person.getId().equals(key.getId())).findFirst().orElse(key);
         persons.remove(key);
-        ledgerEntries.removeIf(entry -> entry.isWith(key));
-        homework.removeIf(item -> item.getStudentId().equals(key.getId()));
-        boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(key));
+        boolean hasRemovedFinancialEvents = ledgerEntries.removeIf(entry -> entry.isWith(stored));
+        homework.removeIf(item -> item.getStudentId().equals(stored.getId()));
+        boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(stored));
+        if (hasRemovedFinancialEvents) {
+            logger.fine("Removed linked financial events");
+        }
         if (hasRemovedLessons) {
             logger.fine("Removed linked lessons");
         }
-        if (tasks.removeIf(task -> task.isAbout(key))) {
+        if (tasks.removeIf(task -> task.isAbout(stored))) {
             logger.fine("Removed linked tasks");
         }
     }
